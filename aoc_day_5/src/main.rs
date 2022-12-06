@@ -2,7 +2,7 @@ use std::{collections::HashMap, fs};
 
 fn main() {
     let beginning = fs::read_to_string("state.txt").expect("input should have been read");
-    let state: Vec<&str> = beginning.split("\n").into_iter().collect();
+    let state: Vec<&str> = beginning.split("\n").collect();
 
     let mut stacks: HashMap<u32, Vec<char>> = HashMap::from([
         (1, Vec::new()),
@@ -39,9 +39,9 @@ fn main() {
     }
 
     let input = fs::read_to_string("input.txt").expect("input should have been read");
-    let moves: Vec<&str> = input.split("\n").into_iter().collect();
+    let moves: Vec<&str> = input.split("\n").collect();
 
-    for line in moves.into_iter() {
+    for line in moves {
         let processed = line
             .replace("move ", "")
             .replace(" from ", ",")
