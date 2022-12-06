@@ -1,13 +1,10 @@
 use std::{collections::HashMap, fs};
 
 fn main() {
-    let input = fs::read_to_string("input.txt").expect("input should have been read");
-    let moves: Vec<&str> = input.split("\n").into_iter().collect();
-
-    let beginning = fs::read_to_string("input.txt").expect("input should have been read");
+    let beginning = fs::read_to_string("state.txt").expect("input should have been read");
     let state: Vec<&str> = beginning.split("\n").into_iter().collect();
 
-    let mut stacks: HashMap<u16, Vec<&str>> = HashMap::from([
+    let mut stacks: HashMap<u32, Vec<char>> = HashMap::from([
         (1, Vec::new()),
         (2, Vec::new()),
         (3, Vec::new()),
@@ -19,25 +16,74 @@ fn main() {
         (9, Vec::new()),
     ]);
 
-    //create a ds here to hold the split out crate values
-    //just iterating and pushing won't work as it will be dropped after the loop and need to have that memory allocated still in order to push
-    //This was a bit of a brainfuck
-    //I can understand why memory management is such a clusterfuck in c.
-
-    //[[z,g,v,v,q,m,l,n,r], [j,s,q,s,z,w,p,g,r], etc]
-    let mut crate_info: Vec<Vec<String>> = Vec::new();
-
     for row in state.into_iter().rev() {
-        let crates: Vec<String> = row
-            .split(" ")
-            .map(|v| v.replace("[", "").replace("]", ""))
-            .collect();
+        let mut mapped_row = String::from(row);
+        mapped_row.push(' ');
 
-        crate_info.push(crates);
+        let mut iter_chars = mapped_row.chars();
+        let char_length = mapped_row.chars().count();
+
+        for i in (0..char_length).step_by(4) {
+            iter_chars.next();
+            let entry = iter_chars.next().clone().unwrap();
+            iter_chars.next();
+            iter_chars.next();
+
+            if entry != ' ' {
+                let stack_index = ((i + 1) as f32 / 4.0).ceil() as u32;
+                //println!("stack: {stack_index}, entry: {entry}");
+                let stack = stacks.get_mut(&stack_index).unwrap();
+                stack.push(entry);
+            }
+        }
     }
 
-    //now push the values from crate_info into the final stacks(our working set)
-    for row in crate_info {
-        for (pos, entry) in row.iter().enumerate() {}
+    let input = fs::read_to_string("input.txt").expect("input should have been read");
+    let moves: Vec<&str> = input.split("\n").into_iter().collect();
+
+    for line in moves.into_iter() {
+        let processed = line
+            .replace("move ", "")
+            .replace(" from ", ",")
+            .replace(" to ", ",");
+
+        let mut operations = processed.split(",");
+        let to_move: u32 = operations.next().unwrap().parse().unwrap();
+        let i_source: u32 = operations.next().unwrap().parse().unwrap();
+        let i_dest: u32 = operations.next().unwrap().parse().unwrap();
+
+        //pt 1
+        // for _i in 0..to_move {
+        //     let moved: char;
+        //     {
+        //         //if feels weird to have to regrab the stack I want to pop from each time here,
+        //         //but maybe it's fine? In node this would be inefficent
+        //         let source = stacks.get_mut(&i_source).unwrap();
+        //         moved = source.pop().unwrap();
+        //     }
+
+        //     let dest = stacks.get_mut(&i_dest).unwrap();
+        //     dest.push(moved);
+        // }
+
+        //pt 2
+
+        let moved: Vec<char>;
+        {
+            let source = stacks.get_mut(&i_source).unwrap();
+            let i_to_move = source.len() - to_move as usize;
+
+            moved = source.split_off(i_to_move);
+        }
+
+        let dest = stacks.get_mut(&i_dest).unwrap();
+        for j in moved.iter() {
+            dest.push(*j);
+        }
+    }
+
+    for (col_num, stack) in stacks {
+        let last_val = stack.clone().pop().unwrap();
+        println!("{col_num}, {last_val}")
     }
 }
